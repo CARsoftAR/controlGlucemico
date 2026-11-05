@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../measurements/presentation/providers/glucose_provider.dart';
+import '../../../onboarding/presentation/screens/onboarding_screen.dart';
 
 /// Pantalla de configuración para la gestión de recordatorios y alarmas locales
 /// Respeta estrictamente la estética Pure Dark con interruptores en Cyan (#00F0FF)
@@ -64,15 +65,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.pureBlack,
-      appBar: AppBar(
-        title: const Text('Ajustes y Recordatorios'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.backgroundGradient,
       ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text('Ajustes y Recordatorios'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
@@ -238,6 +245,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   ListTile(
                     leading: const Icon(
+                      Icons.school_outlined,
+                      color: AppColors.primaryCyan,
+                    ),
+                    title: const Text(
+                      'Ver tutorial de bienvenida (Onboarding)',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Revisar las pantallas introductorias de Gluco Control',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                      );
+                    },
+                  ),
+                  const Divider(color: AppColors.border, height: 1),
+                  ListTile(
+                    leading: const Icon(
                       Icons.cloud_download_outlined,
                       color: AppColors.primaryCyan,
                     ),
@@ -304,21 +343,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showClearDataConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.75),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (dialogContext) {
         return Dialog(
-          backgroundColor: const Color(0xFF0A0A0A),
+          backgroundColor: Colors.white.withValues(alpha: 0.95),
           surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
-            side: const BorderSide(color: AppColors.border, width: 1.0),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.90), width: 1.5),
           ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),

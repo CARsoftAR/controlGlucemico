@@ -21,7 +21,7 @@ class AddMeasurementModal {
 
     return showDialog<GlucoseMeasurement>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.8),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (modalCtx) {
         return StatefulBuilder(
           builder: (context, setState) {
@@ -119,14 +119,14 @@ class AddMeasurementModal {
                             fontWeight: FontWeight.w600,
                           ),
                           filled: true,
-                          fillColor: AppColors.pureBlack,
+                          fillColor: Colors.white.withValues(alpha: 0.85),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 16,
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.90)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -162,8 +162,8 @@ class AddMeasurementModal {
                               opt,
                               style: TextStyle(
                                 color: isSelected
-                                    ? AppColors.pureBlack
-                                    : AppColors.textSecondary,
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
                                 fontWeight:
                                     isSelected ? FontWeight.bold : FontWeight.w500,
                                 fontSize: 12,
@@ -171,11 +171,11 @@ class AddMeasurementModal {
                             ),
                             selected: isSelected,
                             selectedColor: AppColors.primaryCyan,
-                            backgroundColor: AppColors.surfaceElevated,
+                            backgroundColor: Colors.white.withValues(alpha: 0.8),
                             side: BorderSide(
                               color: isSelected
                                   ? AppColors.primaryCyan
-                                  : AppColors.border,
+                                  : Colors.white.withValues(alpha: 0.9),
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
