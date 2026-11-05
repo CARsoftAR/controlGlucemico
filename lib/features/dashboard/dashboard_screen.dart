@@ -364,6 +364,31 @@ class DashboardScreen extends StatelessWidget {
                                   fontSize: 12,
                                 ),
                               ),
+                              if (item.notes != null && item.notes!.trim().isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.medication_outlined,
+                                      size: 13,
+                                      color: AppColors.primaryCyan,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        item.notes!,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: AppColors.primaryCyan,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
                           ),
                         ),

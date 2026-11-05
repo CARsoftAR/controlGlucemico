@@ -6,6 +6,7 @@ class GlucoseMeasurement {
   final DateTime timestamp;
   final String context; // Ej: "En ayunas", "Postprandial", "Antes de dormir", etc.
   final bool isHigh;
+  final String? notes; // Dosis de insulina u observaciones
 
   /// Umbral clínico estándar para considerar hiperglucemia si no se especifica
   static const double defaultHighThreshold = 180.0;
@@ -17,6 +18,7 @@ class GlucoseMeasurement {
     required this.timestamp,
     required this.context,
     required this.isHigh,
+    this.notes,
   });
 
   /// Factory constructor con cálculo automático de [isHigh] si no se provee
@@ -26,6 +28,7 @@ class GlucoseMeasurement {
     DateTime? timestamp,
     String? context,
     bool? isHigh,
+    String? notes,
   }) {
     return GlucoseMeasurement(
       id: id ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -33,10 +36,11 @@ class GlucoseMeasurement {
       timestamp: timestamp ?? DateTime.now(),
       context: context ?? 'General',
       isHigh: isHigh ?? (value > defaultHighThreshold),
+      notes: notes,
     );
   }
 
-  /// Serialización a Map compatible con Firestore / JSON
+  /// Serialización a Map compatible con Firestore / SQLite / JSON
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -45,6 +49,7 @@ class GlucoseMeasurement {
       'timestampMillis': timestamp.millisecondsSinceEpoch,
       'context': context,
       'isHigh': isHigh,
+      if (notes != null) 'notes': notes,
     };
   }
 
@@ -86,6 +91,7 @@ class GlucoseMeasurement {
       timestamp: parsedTimestamp,
       context: map['context']?.toString() ?? 'General',
       isHigh: parsedIsHigh,
+      notes: map['notes'] as String?,
     );
   }
 
@@ -96,6 +102,7 @@ class GlucoseMeasurement {
     DateTime? timestamp,
     String? context,
     bool? isHigh,
+    String? notes,
   }) {
     return GlucoseMeasurement(
       id: id ?? this.id,
@@ -103,6 +110,7 @@ class GlucoseMeasurement {
       timestamp: timestamp ?? this.timestamp,
       context: context ?? this.context,
       isHigh: isHigh ?? this.isHigh,
+      notes: notes ?? this.notes,
     );
   }
 
@@ -115,7 +123,7 @@ class GlucoseMeasurement {
 
   @override
   String toString() {
-    return 'GlucoseMeasurement(id: $id, value: $value mg/dL, timestamp: $timestamp, context: $context, isHigh: $isHigh)';
+    return 'GlucoseMeasurement(id: $id, value: $value mg/dL, timestamp: $timestamp, context: $context, isHigh: $isHigh, notes: $notes)';
   }
 
   @override
@@ -126,11 +134,12 @@ class GlucoseMeasurement {
         other.value == value &&
         other.timestamp == timestamp &&
         other.context == context &&
-        other.isHigh == isHigh;
+        other.isHigh == isHigh &&
+        other.notes == notes;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, value, timestamp, context, isHigh);
+    return Object.hash(id, value, timestamp, context, isHigh, notes);
   }
 }

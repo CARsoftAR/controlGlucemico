@@ -23,8 +23,15 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          try {
+            await db.execute('ALTER TABLE $tableName ADD COLUMN notes TEXT');
+          } catch (_) {}
+        }
+      },
     );
   }
 
@@ -36,7 +43,8 @@ class DatabaseHelper {
         timestamp TEXT NOT NULL,
         timestampMillis INTEGER NOT NULL,
         context TEXT NOT NULL,
-        isHigh INTEGER NOT NULL
+        isHigh INTEGER NOT NULL,
+        notes TEXT
       )
     ''');
   }
@@ -52,6 +60,7 @@ class DatabaseHelper {
         'timestampMillis': measurement.timestamp.millisecondsSinceEpoch,
         'context': measurement.context,
         'isHigh': measurement.isHigh ? 1 : 0,
+        'notes': measurement.notes,
       };
 
       return await db.insert(
@@ -81,6 +90,7 @@ class DatabaseHelper {
           timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestampMillis'] as int),
           context: json['context'] as String,
           isHigh: (json['isHigh'] as int) == 1,
+          notes: json['notes'] as String?,
         );
       }).toList();
     } catch (_) {
@@ -97,6 +107,16 @@ class DatabaseHelper {
         where: 'id = ?',
         whereArgs: [id],
       );
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Elimina todos los registros de la base de datos local
+  Future<int> clearAllMeasurements() async {
+    try {
+      final db = await database;
+      return await db.delete(tableName);
     } catch (_) {
       return 0;
     }

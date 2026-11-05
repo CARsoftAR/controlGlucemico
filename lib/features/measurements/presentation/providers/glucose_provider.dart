@@ -116,4 +116,76 @@ class GlucoseProvider extends ChangeNotifier {
       await _dbHelper.deleteMeasurement(id);
     } catch (_) {}
   }
+
+  /// Borra todos los registros físicos de la base de datos local y limpia la lista reactiva en memoria
+  Future<void> clearAllData() async {
+    _measurements.clear();
+    notifyListeners();
+
+    try {
+      await _dbHelper.clearAllMeasurements();
+    } catch (_) {}
+  }
+
+  /// Carga masiva de los registros históricos del paciente en SQLite y actualiza reactivamente la UI
+  Future<void> loadHistoricalData() async {
+    _isLoading = true;
+    notifyListeners();
+
+    final historicalRaw = <Map<String, dynamic>>[
+      {'dt': DateTime(2026, 9, 11, 13, 0), 'val': 155.0, 'ctx': 'Antes de comer', 'notes': null},
+      {'dt': DateTime(2026, 9, 11, 21, 0), 'val': 203.0, 'ctx': 'Antes de dormir', 'notes': 'NHP 14u + Apidra 6u'},
+      {'dt': DateTime(2026, 9, 12, 8, 0), 'val': 195.0, 'ctx': 'En ayunas', 'notes': null},
+      {'dt': DateTime(2026, 9, 12, 15, 0), 'val': 204.0, 'ctx': 'Antes de comer', 'notes': '6u Apidra'},
+      {'dt': DateTime(2026, 9, 12, 22, 15), 'val': 188.0, 'ctx': 'Antes de dormir', 'notes': null},
+      {'dt': DateTime(2026, 9, 13, 9, 30), 'val': 145.0, 'ctx': 'En ayunas', 'notes': null},
+      {'dt': DateTime(2026, 9, 13, 14, 5), 'val': 201.0, 'ctx': 'Antes de comer', 'notes': '8u Apidra'},
+      {'dt': DateTime(2026, 9, 14, 11, 0), 'val': 198.0, 'ctx': 'En ayunas', 'notes': 'NHP 14u'},
+      {'dt': DateTime(2026, 9, 14, 23, 20), 'val': 135.0, 'ctx': 'Antes de dormir', 'notes': null},
+      {'dt': DateTime(2026, 9, 22, 10, 35), 'val': 215.0, 'ctx': 'En ayunas', 'notes': 'No me puse insulina'},
+      {'dt': DateTime(2026, 9, 23, 10, 43), 'val': 146.0, 'ctx': 'En ayunas', 'notes': 'NHP 14u + Apidra 6'},
+      {'dt': DateTime(2026, 9, 26, 8, 40), 'val': 190.0, 'ctx': 'En ayunas', 'notes': 'NHP 14u'},
+      {'dt': DateTime(2026, 9, 28, 21, 30), 'val': 173.0, 'ctx': 'Antes de dormir', 'notes': 'NHP 14u'},
+      {'dt': DateTime(2026, 9, 29, 8, 20), 'val': 193.0, 'ctx': 'En ayunas', 'notes': 'NHP 14u'},
+      {'dt': DateTime(2026, 10, 19, 12, 46), 'val': 218.0, 'ctx': 'Antes de comer', 'notes': '8u Apidra'},
+      {'dt': DateTime(2026, 10, 20, 6, 10), 'val': 196.0, 'ctx': 'En ayunas', 'notes': 'Analisis + urocultivo'},
+      {'dt': DateTime(2026, 10, 20, 22, 45), 'val': 203.0, 'ctx': 'Antes de dormir', 'notes': 'NHP 14u + 6 Apidra'},
+      {'dt': DateTime(2026, 10, 26, 21, 30), 'val': 197.0, 'ctx': 'Antes de dormir', 'notes': '14u NHP + 6 Apidra'},
+      {'dt': DateTime(2026, 10, 27, 8, 55), 'val': 183.0, 'ctx': 'En ayunas', 'notes': 'NHP 14 + 4 Apidra'},
+      {'dt': DateTime(2026, 10, 30, 13, 30), 'val': 273.0, 'ctx': 'Antes de comer', 'notes': 'NHP 14u + 8 Apidra'},
+      {'dt': DateTime(2026, 11, 2, 6, 28), 'val': 247.0, 'ctx': 'En ayunas', 'notes': 'NHP 14u + 6 Apidra'},
+      {'dt': DateTime(2026, 11, 3, 20, 50), 'val': 234.0, 'ctx': 'Antes de dormir', 'notes': 'NHP 14u + 8 Apidra'},
+    ];
+
+    try {
+      final List<GlucoseMeasurement> seededItems = [];
+      for (int i = 0; i < historicalRaw.length; i++) {
+        final item = historicalRaw[i];
+        final dt = item['dt'] as DateTime;
+        final val = (item['val'] as num).toDouble();
+        final ctx = item['ctx'] as String;
+        final notes = item['notes'] as String?;
+
+        final measurement = GlucoseMeasurement(
+          id: 'hist_${dt.millisecondsSinceEpoch}_$i',
+          value: val,
+          timestamp: dt,
+          context: ctx,
+          isHigh: val > 140.0, // Cálculo automático: isHigh si value > 140
+          notes: notes,
+        );
+
+        seededItems.add(measurement);
+        await _dbHelper.insertMeasurement(measurement);
+      }
+
+      final allData = await _dbHelper.getAllMeasurements();
+      _measurements = allData.isNotEmpty ? allData : seededItems;
+      _measurements.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    } catch (_) {
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

@@ -24,7 +24,7 @@ void main() {
     expect(find.byIcon(Icons.add), findsOneWidget);
   });
 
-  test('GlucoseMeasurement serialization toMap and fromMap works seamlessly', () {
+  test('GlucoseMeasurement serialization toMap and fromMap works seamlessly with notes', () {
     final now = DateTime(2026, 10, 25, 20, 30);
     final measurement = GlucoseMeasurement(
       id: 'test_1',
@@ -32,6 +32,7 @@ void main() {
       timestamp: now,
       context: 'Postprandial (2h)',
       isHigh: true,
+      notes: 'NHP 14u + 6 Apidra',
     );
 
     final map = measurement.toMap();
@@ -39,12 +40,32 @@ void main() {
     expect(map['value'], 195.0);
     expect(map['context'], 'Postprandial (2h)');
     expect(map['isHigh'], true);
+    expect(map['notes'], 'NHP 14u + 6 Apidra');
 
     final fromMap = GlucoseMeasurement.fromMap(map, 'test_1');
     expect(fromMap.id, 'test_1');
     expect(fromMap.value, 195.0);
     expect(fromMap.context, 'Postprandial (2h)');
     expect(fromMap.isHigh, true);
+    expect(fromMap.notes, 'NHP 14u + 6 Apidra');
+  });
+
+  test('GlucoseProvider loadHistoricalData inserts 22 records and clearAllData wipes them', () async {
+    final provider = GlucoseProvider();
+    await provider.loadHistoricalData();
+
+    expect(provider.measurements.length, 22);
+    // Verificar que isHigh se calcula con > 140
+    for (final m in provider.measurements) {
+      expect(m.isHigh, m.value > 140.0);
+    }
+    // Verificar que existen registros con notas
+    final withNotes = provider.measurements.where((m) => m.notes != null).toList();
+    expect(withNotes.isNotEmpty, true);
+
+    // Borrado completo
+    await provider.clearAllData();
+    expect(provider.measurements.isEmpty, true);
   });
 
   testWidgets('AddMeasurementScreen shows exact modal alert when glucose > 140 mg/dL', (WidgetTester tester) async {
@@ -113,10 +134,15 @@ void main() {
     expect(find.byType(LineChart), findsOneWidget);
   });
 
-  testWidgets('SettingsScreen renders switches in Cyan and critical test button', (WidgetTester tester) async {
+  testWidgets('SettingsScreen renders switches, critical test button and data management section', (WidgetTester tester) async {
+    final provider = GlucoseProvider();
+
     await tester.pumpWidget(
-      const MaterialApp(
-        home: SettingsScreen(),
+      ChangeNotifierProvider.value(
+        value: provider,
+        child: const MaterialApp(
+          home: SettingsScreen(),
+        ),
       ),
     );
 
@@ -126,8 +152,24 @@ void main() {
     expect(find.text('Antes de Dormir'), findsOneWidget);
     expect(find.text('Probar Notificación Crítica'), findsOneWidget);
 
-    // Tap test notification button with warnIfMissed false or scroll
-    await tester.tap(find.text('Probar Notificación Crítica'), warnIfMissed: false);
-    await tester.pump();
+    // Scroll to see GESTIÓN DE DATOS
+    await tester.scrollUntilVisible(find.text('GESTIÓN DE DATOS'), 100);
+    expect(find.text('GESTIÓN DE DATOS'), findsOneWidget);
+    expect(find.text('Borrar todos los registros'), findsOneWidget);
+    expect(find.text('Cargar historial histórico (Seed)'), findsOneWidget);
+
+    // Tap "Borrar todos los registros" and verify dialog
+    await tester.tap(find.text('Borrar todos los registros'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.text('¿Eliminar todo el historial?'), findsOneWidget);
+    expect(find.text('Cancelar'), findsOneWidget);
+    expect(find.text('Eliminar'), findsOneWidget);
+
+    // Cancel dialog
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsNothing);
   });
 }
