@@ -49,7 +49,7 @@ class AppDialog extends StatelessWidget {
   }) {
     return showDialog<T>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.75),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (ctx) => AppDialog(
         icon: icon,
         title: title,

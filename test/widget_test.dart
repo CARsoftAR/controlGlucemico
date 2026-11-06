@@ -9,19 +9,109 @@ import 'package:control_glucemico/features/measurements/presentation/screens/add
 import 'package:control_glucemico/features/dashboard/presentation/widgets/glucose_chart_widget.dart';
 import 'package:control_glucemico/features/settings/presentation/screens/settings_screen.dart';
 
+import 'package:control_glucemico/features/dashboard/dashboard_screen.dart';
+import 'package:control_glucemico/features/history/presentation/screens/history_metrics_screen.dart';
+import 'package:control_glucemico/features/onboarding/presentation/screens/onboarding_screen.dart';
+
 void main() {
+  testWidgets('OnboardingScreen renders 5 steps and navigates to DashboardScreen on completion', (WidgetTester tester) async {
+    final provider = GlucoseProvider();
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: provider,
+        child: const GlucoseControlApp(home: OnboardingScreen()),
+      ),
+    );
+
+    expect(find.text('BIENVENIDA'), findsOneWidget);
+    expect(find.text('Control de Glucosa\nInteligente'), findsOneWidget);
+    expect(find.text('Siguiente'), findsOneWidget);
+
+    // Tap Siguiente -> Step 2 (Tendencias)
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+    expect(find.text('TENDENCIAS'), findsOneWidget);
+    expect(find.text('Visualiza tus\nTendencias'), findsOneWidget);
+
+    // Tap Siguiente -> Step 3 (Alertas)
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+    expect(find.text('ALERTAS'), findsOneWidget);
+    expect(find.text('Nunca olvides una\nmedición'), findsOneWidget);
+
+    // Tap Siguiente -> Step 4 (Reporte Médico)
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+    expect(find.text('REPORTE MÉDICO'), findsOneWidget);
+    expect(find.text('Comparte con tu\nMédico'), findsOneWidget);
+    expect(find.text('Siguiente'), findsOneWidget);
+
+    // Tap Siguiente -> Step 5 (Resumen)
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+    expect(find.text('RESUMEN'), findsOneWidget);
+    expect(find.text('Todo listo para empezar'), findsOneWidget);
+    expect(find.text('Comenzar Ahora'), findsOneWidget);
+
+    // Tap Comenzar Ahora -> Navigates to Dashboard
+    await tester.tap(find.text('Comenzar Ahora'));
+    await tester.pumpAndSettle();
+    expect(find.text('GLUCO CONTROL'), findsOneWidget);
+  });
+
   testWidgets('DashboardScreen renders appbar and floating action button with GlucoseProvider', (WidgetTester tester) async {
     final provider = GlucoseProvider();
     await tester.pumpWidget(
       ChangeNotifierProvider.value(
         value: provider,
-        child: const GlucoseControlApp(),
+        child: const GlucoseControlApp(home: DashboardScreen()),
       ),
     );
 
     expect(find.text('GLUCO CONTROL'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
+    expect(find.text('Historial y Métricas'), findsOneWidget);
+
+    // Tap on Historial y Métricas card to open screen
+    await tester.tap(find.text('Historial y Métricas'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HistoryMetricsScreen), findsOneWidget);
+    expect(find.text('Resumen de Rango Glucémico'), findsOneWidget);
+    expect(find.text('Día'), findsOneWidget);
+    expect(find.text('Semana'), findsOneWidget);
+    expect(find.text('Intervalo'), findsOneWidget);
+  });
+
+  testWidgets('HistoryMetricsScreen filters work smoothly between Día, Semana and custom range', (WidgetTester tester) async {
+    final provider = GlucoseProvider();
+    await provider.addMeasurement(GlucoseMeasurement(
+      id: 'm_today',
+      value: 110.0,
+      timestamp: DateTime.now(),
+      context: 'En ayunas',
+      isHigh: false,
+    ));
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: provider,
+        child: const MaterialApp(
+          home: HistoryMetricsScreen(),
+        ),
+      ),
+    );
+
+    expect(find.text('Historial y Métricas'), findsOneWidget);
+    expect(find.text('Semana'), findsOneWidget);
+    expect(find.text('Resumen de Rango Glucémico'), findsOneWidget);
+    expect(find.text('Registros Agrupados'), findsOneWidget);
+
+    // Switch filter to "Día"
+    await tester.tap(find.text('Día'));
+    await tester.pumpAndSettle();
+    expect(find.text('110'), findsWidgets);
   });
 
   test('GlucoseMeasurement serialization toMap and fromMap works seamlessly with notes', () {
@@ -50,11 +140,11 @@ void main() {
     expect(fromMap.notes, 'NHP 14u + 6 Apidra');
   });
 
-  test('GlucoseProvider loadHistoricalData inserts 22 records and clearAllData wipes them', () async {
+  test('GlucoseProvider loadHistoricalData inserts records and clearAllData wipes them', () async {
     final provider = GlucoseProvider();
     await provider.loadHistoricalData();
 
-    expect(provider.measurements.length, 22);
+    expect(provider.measurements.length, 66);
     // Verificar que isHigh se calcula con > 140
     for (final m in provider.measurements) {
       expect(m.isHigh, m.value > 140.0);
@@ -153,7 +243,8 @@ void main() {
     expect(find.text('Probar Notificación Crítica'), findsOneWidget);
 
     // Scroll to see GESTIÓN DE DATOS
-    await tester.scrollUntilVisible(find.text('GESTIÓN DE DATOS'), 100);
+    await tester.drag(find.byType(ListView), const Offset(0, -450));
+    await tester.pumpAndSettle();
     expect(find.text('GESTIÓN DE DATOS'), findsOneWidget);
     expect(find.text('Borrar todos los registros'), findsOneWidget);
     expect(find.text('Cargar historial histórico (Seed)'), findsOneWidget);

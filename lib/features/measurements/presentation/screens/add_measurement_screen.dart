@@ -194,15 +194,21 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.pureBlack,
-      appBar: AppBar(
-        title: const Text('Registrar Glucosa'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.backgroundGradient,
       ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text('Registrar Glucosa'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
@@ -284,11 +290,11 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                             filled: true,
-                            fillColor: AppColors.pureBlack,
+                            fillColor: Colors.white.withValues(alpha: 0.85),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.90)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -344,7 +350,7 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
                         // DropdownButtonFormField estéticamente adaptado al tema Pure Dark
                         DropdownButtonFormField<String>(
                           initialValue: _selectedContext,
-                          dropdownColor: AppColors.surfaceElevated,
+                          dropdownColor: Colors.white,
                           icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryCyan),
                           style: const TextStyle(
                             color: AppColors.textPrimary,
@@ -353,11 +359,11 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
                           ),
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppColors.pureBlack,
+                            fillColor: Colors.white.withValues(alpha: 0.85),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.90)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -411,6 +417,7 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

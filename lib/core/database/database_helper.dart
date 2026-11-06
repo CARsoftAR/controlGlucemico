@@ -1,5 +1,6 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import '../models/doctor.dart';
 import '../models/glucose_measurement.dart';
 
 /// Capa de persistencia local robusta basada en SQLite
@@ -10,6 +11,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
 
   static const String tableName = 'glucose_measurements';
+  static const String doctorsTableName = 'doctors';
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -23,12 +25,24 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           try {
             await db.execute('ALTER TABLE $tableName ADD COLUMN notes TEXT');
+          } catch (_) {}
+        }
+        if (oldVersion < 3) {
+          try {
+            await db.execute('''
+              CREATE TABLE IF NOT EXISTS $doctorsTableName (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                specialty TEXT,
+                whatsapp TEXT NOT NULL
+              )
+            ''');
           } catch (_) {}
         }
       },
@@ -45,6 +59,15 @@ class DatabaseHelper {
         context TEXT NOT NULL,
         isHigh INTEGER NOT NULL,
         notes TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE $doctorsTableName (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        specialty TEXT,
+        whatsapp TEXT NOT NULL
       )
     ''');
   }
@@ -119,6 +142,67 @@ class DatabaseHelper {
       return await db.delete(tableName);
     } catch (_) {
       return 0;
+    }
+  }
+
+  // ==========================================
+  // GESTIÓN DE MÉDICOS (PERSISTENCIA SQLITE)
+  // ==========================================
+
+  /// Inserta o reemplaza un médico en la base de datos
+  Future<int> insertDoctor(Doctor doctor) async {
+    try {
+      final db = await database;
+      return await db.insert(
+        doctorsTableName,
+        doctor.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (_) {
+      return 1;
+    }
+  }
+
+  /// Actualiza un médico existente
+  Future<int> updateDoctor(Doctor doctor) async {
+    try {
+      final db = await database;
+      return await db.update(
+        doctorsTableName,
+        doctor.toMap(),
+        where: 'id = ?',
+        whereArgs: [doctor.id],
+      );
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Elimina un médico por su ID
+  Future<int> deleteDoctor(String id) async {
+    try {
+      final db = await database;
+      return await db.delete(
+        doctorsTableName,
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Recupera todos los médicos registrados
+  Future<List<Doctor>> getAllDoctors() async {
+    try {
+      final db = await database;
+      final result = await db.query(
+        doctorsTableName,
+        orderBy: 'name ASC',
+      );
+      return result.map((json) => Doctor.fromMap(json)).toList();
+    } catch (_) {
+      return [];
     }
   }
 
